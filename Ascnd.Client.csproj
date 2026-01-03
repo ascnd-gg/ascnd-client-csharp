@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net6.0;net8.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- Package Information -->
+    <PackageId>Ascnd.Client</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>ascnd-gg</Authors>
+    <Company>ascnd-gg</Company>
+    <Description>Official C# client library for the Ascnd leaderboard API. Supports .NET Standard 2.0 (Unity compatible), .NET 6.0, .NET 8.0, and .NET 10.0.</Description>
+    <PackageTags>ascnd;leaderboard;gamedev;unity;gaming;api;grpc</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://ascnd.gg</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ascnd-gg/ascnd-client-csharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <!-- gRPC dependencies for .NET 6.0+ -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
+    <PackageReference Include="Grpc.Net.Client" Version="2.67.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.29.3" />
+    <PackageReference Include="Grpc.Tools" Version="2.67.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- .NET Standard 2.0 specific dependencies for Unity compatibility -->
+  <!-- Uses Grpc.Core instead of Grpc.Net.Client for .NET Standard 2.0 support -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Grpc.Core" Version="2.46.6" />
+    <PackageReference Include="Google.Protobuf" Version="3.29.3" />
+    <PackageReference Include="Grpc.Tools" Version="2.67.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- Common dependencies for all target frameworks -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- Proto file configuration -->
+  <ItemGroup>
+    <Protobuf Include="Protos\ascnd.proto" GrpcServices="Client" />
+  </ItemGroup>
+
+  <!-- Exclude examples and tests from compilation -->
+  <ItemGroup>
+    <Compile Remove="examples\**\*.cs" />
+    <None Remove="examples\**\*.cs" />
+    <Compile Remove="tests\**\*.cs" />
+    <None Remove="tests\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

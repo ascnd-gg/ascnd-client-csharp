@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g., 1.2.3)"
+        required: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            8.0.x
+            10.0.x
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build --output ./nupkg
+
+      - name: NuGet Login (OIDC Trusted Publishing)
+        id: nuget-login
+        uses: nuget/login@v1
+        with:
+          user: rougelite
+
+      - name: Publish to NuGet
+        run: dotnet nuget push ./nupkg/*.nupkg -k ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Upload NuGet package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: ./nupkg/*.nupkg
+
+  create-unity-package:
+    runs-on: ubuntu-latest
+    needs: build-and-publish
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "6.0.x"
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build for netstandard2.0
+        run: dotnet build --configuration Release --framework netstandard2.0
+
+      - name: Create Unity package structure
+        run: |
+          mkdir -p unity-package/Runtime
+          mkdir -p unity-package/Documentation~
+
+          # Copy DLLs
+          cp bin/Release/netstandard2.0/*.dll unity-package/Runtime/
+
+          # Create package.json
+          cat > unity-package/package.json << EOF
+          {
+            "name": "com.ascnd.client",
+            "version": "${{ steps.version.outputs.version }}",
+            "displayName": "Ascnd Client",
+            "description": "Official C# client for the Ascnd leaderboard API",
+            "unity": "2019.4",
+            "author": {
+              "name": "Ascnd",
+              "url": "https://ascnd.gg"
+            },
+            "repository": {
+              "type": "git",
+              "url": "https://github.com/ascnd-gg/ascnd-client-csharp.git"
+            },
+            "license": "MIT"
+          }
+          EOF
+
+          # Copy documentation
+          cp README.md unity-package/Documentation~/
+
+      - name: Create Unity package tarball
+        run: |
+          cd unity-package
+          tar -czvf ../com.ascnd.client-${{ steps.version.outputs.version }}.tgz .
+
+      - name: Upload Unity package to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: com.ascnd.client-*.tgz
+          generate_release_notes: true

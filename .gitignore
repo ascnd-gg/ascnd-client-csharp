@@ -1,0 +1,32 @@
+# Build results
+bin/
+obj/
+out/
+
+# NuGet packages
+*.nupkg
+nupkg/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# IDE
+.idea/
+.vs/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test results
+TestResults/
+coverage/
+
+# Unity package build
+unity-package/
+*.tgz
