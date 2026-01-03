@@ -476,7 +476,7 @@ catch (TaskCanceledException)
 
 ## Links
 
-- [Documentation](https://ascnd.gg/docs/sdks/csharp)
+- [Documentation](https://docs.ascnd.gg/sdks/csharp)
 - [GitHub](https://github.com/ascnd-gg/ascnd-client-csharp)
 - [NuGet](https://www.nuget.org/packages/Ascnd.Client)
 
