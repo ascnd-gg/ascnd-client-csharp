@@ -82,8 +82,9 @@ message GetLeaderboardRequest {
   // Maximum number of entries to return (default: 10, max: 100).
   optional int32 limit = 2;
 
-  // Number of entries to skip for pagination.
-  optional int32 offset = 3;
+  // Reserved: offset field was removed in favor of cursor-based pagination.
+  reserved 3;
+  reserved "offset";
 
   // Which period to retrieve: "current", "previous", or a timestamp.
   optional string period = 4;
@@ -91,6 +92,15 @@ message GetLeaderboardRequest {
   // Optional view slug to filter by metadata criteria.
   // If provided, returns rankings within the view (not global rank).
   optional string view_slug = 5;
+
+  // Cursor for keyset pagination (encodes score + player_id).
+  // When provided, returns entries after this cursor position.
+  optional string cursor = 6;
+
+  // Jump to a specific rank position.
+  // Returns entries starting from this rank, with cursor for continuation.
+  // Use this instead of offset for random access to leaderboard positions.
+  optional int32 around_rank = 7;
 }
 
 // GetLeaderboardResponse contains the leaderboard entries.
@@ -112,6 +122,10 @@ message GetLeaderboardResponse {
 
   // Active view info if filtering by view_slug.
   optional ViewInfo view = 6;
+
+  // Cursor for fetching the next page (keyset pagination).
+  // Only present when has_more is true.
+  optional string next_cursor = 7;
 }
 
 // LeaderboardEntry represents a single entry on the leaderboard.
