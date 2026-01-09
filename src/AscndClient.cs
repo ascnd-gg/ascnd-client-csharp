@@ -176,8 +176,8 @@ namespace Ascnd.Client
             if (request == null) throw new ArgumentNullException(nameof(request));
             ThrowIfDisposed();
 
-            _logger?.LogDebug("GetLeaderboardAsync called for leaderboard {LeaderboardId}, limit {Limit}, offset {Offset}",
-                request.LeaderboardId, request.Limit, request.Offset);
+            _logger?.LogDebug("GetLeaderboardAsync called for leaderboard {LeaderboardId}, limit {Limit}, cursor {Cursor}",
+                request.LeaderboardId, request.Limit, request.Cursor);
 
             try
             {
@@ -322,21 +322,26 @@ namespace Ascnd.Client
         /// </summary>
         /// <param name="leaderboardId">The leaderboard ID.</param>
         /// <param name="limit">Maximum number of entries to return (default: 10, max: 100).</param>
-        /// <param name="offset">Number of entries to skip for pagination.</param>
+        /// <param name="cursor">Cursor for pagination (from previous response's NextCursor).</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>The leaderboard entries.</returns>
         public Task<GetLeaderboardResponse> GetLeaderboardAsync(
             string leaderboardId,
             int limit = 10,
-            int offset = 0,
+            string? cursor = null,
             CancellationToken cancellationToken = default)
         {
             var request = new GetLeaderboardRequest
             {
                 LeaderboardId = leaderboardId,
-                Limit = limit,
-                Offset = offset
+                Limit = limit
             };
+
+            if (cursor != null)
+            {
+                request.Cursor = cursor;
+            }
+
             return GetLeaderboardAsync(request, cancellationToken);
         }
 

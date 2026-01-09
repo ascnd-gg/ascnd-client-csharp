@@ -165,14 +165,13 @@ Retrieve leaderboard entries with bracket information.
 using Ascnd.Client.Grpc;
 
 // Simple overload
-var leaderboard = await client.GetLeaderboardAsync("leaderboard-id", limit: 25, offset: 0);
+var leaderboard = await client.GetLeaderboardAsync("leaderboard-id", limit: 25);
 
 // Full request object with view filtering
 var request = new GetLeaderboardRequest
 {
     LeaderboardId = "weekly-highscores",
     Limit = 25,
-    Offset = 0,
     Period = "current",      // "current", "previous", or ISO timestamp
     ViewSlug = "na-region"   // Optional: filter by metadata view
 };
@@ -201,6 +200,45 @@ foreach (var entry in leaderboard.Entries)
         Console.WriteLine($"   Metadata: {json}");
     }
 }
+```
+
+
+### Pagination
+
+The leaderboard API uses cursor-based pagination for efficient traversal of large result sets.
+
+```csharp
+// First page
+var leaderboard = await client.GetLeaderboardAsync("leaderboard-id", limit: 25);
+
+// Next page using cursor
+if (leaderboard.HasMore)
+{
+    var nextPage = await client.GetLeaderboardAsync(new GetLeaderboardRequest
+    {
+        LeaderboardId = "leaderboard-id",
+        Limit = 25,
+        Cursor = leaderboard.NextCursor
+    });
+}
+```
+
+#### Random Access with AroundRank
+
+Use `AroundRank` to fetch entries centered around a specific rank position:
+
+```csharp
+// Get entries around rank 500 (useful for "see players near you" features)
+var request = new GetLeaderboardRequest
+{
+    LeaderboardId = "weekly-highscores",
+    Limit = 21,        // Gets 10 above, the target rank, and 10 below
+    AroundRank = 500
+};
+var leaderboard = await client.GetLeaderboardAsync(request);
+
+// Note: AroundRank returns a window of entries centered on the specified rank
+// The cursor can be used to paginate from this position
 ```
 
 ### GetPlayerRankAsync
